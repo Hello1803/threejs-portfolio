@@ -150,6 +150,113 @@ renderer.domElement.style.touchAction =
 
 
 // ============================================================
+// CONTROLS HINT
+// ============================================================
+//
+// A brief on-screen reminder of the controls, shown in the top
+// corner on load and faded out after a few seconds. Pure DOM/CSS,
+// entirely independent of the 3D scene — safe regardless of
+// what's in environment-effects.js.
+
+(function setupControlsHint() {
+
+    const isTouchDevice =
+        ('ontouchstart' in window) ||
+        navigator.maxTouchPoints > 0;
+
+    const hintText =
+        isTouchDevice
+            ? 'Drag to look around · Tap the iPad to interact'
+            : 'Right-click + drag to look around · Click to interact';
+
+
+    const style =
+        document.createElement('style');
+
+    style.textContent = `
+        #controls-hint {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            padding: 8px 16px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Inter, sans-serif;
+            font-size: 13px;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+        #controls-hint.visible {
+            opacity: 1;
+        }
+
+        @media (max-width: 520px) {
+            #controls-hint {
+                top: 12px;
+                font-size: 11.5px;
+                padding: 7px 12px;
+                max-width: 90vw;
+                white-space: normal;
+                text-align: center;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+
+
+    const hint =
+        document.createElement('div');
+
+    hint.id = 'controls-hint';
+
+    hint.textContent = hintText;
+
+    document.body.appendChild(hint);
+
+
+    // Fade in on the next frame (so the transition actually
+    // animates instead of snapping straight to visible).
+    requestAnimationFrame(() => {
+
+        requestAnimationFrame(() => {
+
+            hint.classList.add('visible');
+
+        });
+
+    });
+
+
+    const VISIBLE_DURATION_MS = 4500;
+
+    const FADE_DURATION_MS = 600;
+
+    setTimeout(() => {
+
+        hint.classList.remove('visible');
+
+        setTimeout(() => {
+
+            hint.remove();
+
+        }, FADE_DURATION_MS);
+
+    }, VISIBLE_DURATION_MS);
+
+})();
+
+
+// ============================================================
 // POST-PROCESSING
 // ============================================================
 //
@@ -281,6 +388,97 @@ const environmentEffects = new EnvironmentEffects(scene, {
     fireflyCount: 45,
     areaRadius: 12
 });
+
+// N / D keys already work (bound inside EnvironmentEffects
+// itself) but have no touch equivalent — Android/iOS have no
+// keyboard visible by default. This button calls the exact same
+// setMode()/toggleDayNight() the keys use, so it can never drift
+// out of sync with what N/D do.
+
+(function setupDayNightButton() {
+
+    const style =
+        document.createElement('style');
+
+    style.textContent = `
+        #day-night-toggle {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1000;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+            color: #fff;
+            font-size: 18px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #day-night-toggle:active {
+            transform: scale(0.92);
+        }
+
+        @media (max-width: 520px) {
+            #day-night-toggle {
+                top: 12px;
+                right: 12px;
+                width: 38px;
+                height: 38px;
+                font-size: 16px;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+
+
+    const button =
+        document.createElement('button');
+
+    button.id = 'day-night-toggle';
+
+    button.type = 'button';
+
+    // Shows the icon of the mode tapping will switch TO — same
+    // convention most light/dark toggles use.
+    function updateIcon() {
+
+        button.textContent =
+            environmentEffects.mode === 'day'
+                ? '🌙'
+                : '☀️';
+
+        button.setAttribute(
+            'aria-label',
+            environmentEffects.mode === 'day'
+                ? 'Switch to night'
+                : 'Switch to day'
+        );
+
+    }
+
+    updateIcon();
+
+    button.addEventListener('click', () => {
+
+        environmentEffects.toggleDayNight();
+
+        updateIcon();
+
+    });
+
+    document.body.appendChild(button);
+
+})();
 
 // Later, the day/night system can call:
 // environmentEffects.setMode('day');
