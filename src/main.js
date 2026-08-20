@@ -166,7 +166,7 @@ renderer.domElement.style.touchAction =
 
     const hintText =
         isTouchDevice
-            ? 'Drag to look around · Tap the iPad to interact'
+            ? 'Drag to look around · Tap the iPad to interact · Landscape Mode Recommended'
             : 'Right-click + drag to look around · Click to interact';
 
 
