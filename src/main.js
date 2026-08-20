@@ -138,6 +138,16 @@ document.body.appendChild(
     renderer.domElement
 );
 
+// Without this, the browser's own touch-gesture recognizer
+// (page scroll, pull-to-refresh, pinch-zoom) competes with our
+// pointer handlers below. On mobile specifically, once it
+// decides to take over a gesture it fires pointercancel — which
+// is what was causing camera-look to move a little, stop, and
+// need a fresh touch to continue. This tells the browser JS has
+// full control of touch on the canvas, so it never intervenes.
+renderer.domElement.style.touchAction =
+    'none';
+
 
 // ============================================================
 // POST-PROCESSING
@@ -2173,6 +2183,11 @@ renderer.domElement.addEventListener(
         lastPointerX = event.clientX;
 
         lastPointerY = event.clientY;
+
+        // Belt-and-suspenders alongside touch-action: none above —
+        // some browsers still respect an explicit preventDefault
+        // on the gesture that actually started dragging.
+        event.preventDefault();
 
         renderer.domElement.setPointerCapture(
             event.pointerId
