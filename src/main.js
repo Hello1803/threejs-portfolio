@@ -83,7 +83,7 @@ scene.fog =
 
 const NORMAL_FOV = 60;
 
-const ZOOM_FOV = 48;
+const ZOOM_FOV = 40;
 
 let targetFov = NORMAL_FOV;
 
@@ -182,8 +182,7 @@ renderer.domElement.style.touchAction =
             z-index: 1000;
             padding: 8px 16px;
             border-radius: 999px;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(6px);
+            background: rgba(10, 10, 10, 0.82);
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
                 Inter, sans-serif;
@@ -410,8 +409,7 @@ const environmentEffects = new EnvironmentEffects(scene, {
             height: 42px;
             border-radius: 50%;
             border: none;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(6px);
+            background: rgba(10, 10, 10, 0.82);
             color: #fff;
             font-size: 18px;
             line-height: 1;
@@ -476,6 +474,15 @@ const environmentEffects = new EnvironmentEffects(scene, {
 
     });
 
+    button.addEventListener('pointerenter', () => {
+        isPointerOverChrome = true;
+    });
+
+    button.addEventListener('pointerleave', (event) => {
+        isPointerOverChrome = false;
+        resyncMouseFromEvent(event);
+    });
+
     document.body.appendChild(button);
 
 })();
@@ -483,6 +490,178 @@ const environmentEffects = new EnvironmentEffects(scene, {
 // Later, the day/night system can call:
 // environmentEffects.setMode('day');
 // environmentEffects.setMode('night');
+
+
+// ============================================================
+// SCENE FADE + EXIT BUTTON
+// ============================================================
+//
+// A full-screen black overlay that starts opaque (so the model
+// loading and the camera's starting "arched back" pose are never
+// visible mid-setup), fades out once the scene is actually ready
+// alongside the camera's entrance move (see positionCameraAtHead
+// and the intro-animation block in animate()), and fades back in
+// — alongside a reverse camera move — when leaving back to the
+// 2D page via the exit button below.
+
+let sceneFadeElement = null;
+
+let sceneLoadingTextElement = null;
+
+(function setupSceneFade() {
+
+    const style =
+        document.createElement('style');
+
+    style.textContent = `
+        #scene-fade {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: #000;
+            opacity: 1;
+            pointer-events: none;
+            transition: opacity 1.1s ease;
+        }
+
+        #scene-fade.hidden {
+            opacity: 0;
+        }
+
+        #scene-loading-text {
+            position: fixed;
+            inset: 0;
+            z-index: 2001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.55);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Inter, sans-serif;
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        #scene-loading-text.visible {
+            opacity: 1;
+        }
+
+        #exit-to-2d {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1000;
+            height: 42px;
+            padding: 0 16px;
+            border-radius: 999px;
+            border: none;
+            background: rgba(10, 10, 10, 0.82);
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Inter, sans-serif;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #exit-to-2d:active {
+            transform: scale(0.96);
+        }
+
+        @media (max-width: 520px) {
+            #exit-to-2d {
+                top: 12px;
+                left: 12px;
+                height: 38px;
+                padding: 0 13px;
+                font-size: 12px;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+
+
+    sceneFadeElement =
+        document.createElement('div');
+
+    sceneFadeElement.id = 'scene-fade';
+
+    document.body.appendChild(sceneFadeElement);
+
+
+    sceneLoadingTextElement =
+        document.createElement('div');
+
+    sceneLoadingTextElement.id = 'scene-loading-text';
+
+    sceneLoadingTextElement.textContent = 'Loading…';
+
+    document.body.appendChild(sceneLoadingTextElement);
+
+    // Only show the loading text if setup is actually taking a
+    // moment — avoids a pointless flash on fast loads.
+    setTimeout(() => {
+
+        if (sceneFadeElement && !sceneFadeElement.classList.contains('hidden')) {
+
+            sceneLoadingTextElement.classList.add('visible');
+
+        }
+
+    }, 500);
+
+    // Safety fallback: if positionCameraAtHead() never runs for
+    // any reason (model/skeleton issue), don't leave the screen
+    // permanently black.
+    setTimeout(() => {
+
+        if (sceneFadeElement && !sceneFadeElement.classList.contains('hidden')) {
+
+            console.warn(
+                'Scene fade fallback: forcing reveal after timeout.'
+            );
+
+            sceneFadeElement.classList.add('hidden');
+
+            sceneLoadingTextElement.classList.remove('visible');
+
+        }
+
+    }, 8000);
+
+
+    const exitButton =
+        document.createElement('button');
+
+    exitButton.id = 'exit-to-2d';
+
+    exitButton.type = 'button';
+
+    exitButton.innerHTML = '← Portfolio';
+
+    exitButton.addEventListener('click', exitToPortfolio);
+
+    exitButton.addEventListener('pointerenter', () => {
+        isPointerOverChrome = true;
+    });
+
+    exitButton.addEventListener('pointerleave', (event) => {
+        isPointerOverChrome = false;
+        resyncMouseFromEvent(event);
+    });
+
+    document.body.appendChild(exitButton);
+
+})();
 
 
 
@@ -518,6 +697,30 @@ const raycaster =
 
 const mouse =
     new THREE.Vector2();
+
+// --------------------------------------------------------
+// STOPGAP for the FOV/hover bug (root cause still being
+// tracked down — see the debug readout further down).
+//
+// Not a hardcoded reset to (0,0): that would only "work" by
+// coincidence, because the ipad happens to sit near screen-
+// center in the current camera framing — drag the camera
+// anywhere else and a hardcoded reset would zoom toward the
+// wrong spot entirely. This instead re-syncs mouse.x/y from
+// the REAL cursor position at the exact moment it crosses back
+// from an overlay button onto the canvas, using the leave
+// event's own (reliable) clientX/clientY.
+// --------------------------------------------------------
+
+function resyncMouseFromEvent(event) {
+
+    mouse.x =
+        (event.clientX / window.innerWidth) * 2 - 1;
+
+    mouse.y =
+        -(event.clientY / window.innerHeight) * 2 + 1;
+
+}
 
 
 // ============================================================
@@ -783,6 +986,160 @@ loader.load(
 
 
 // ============================================================
+// CAMERA INTRO / OUTRO (arch back <-> arch forward)
+// ============================================================
+//
+// Entrance: camera starts pulled back and slightly elevated
+// (looking down toward where it'll end up), then eases forward
+// and down into the calibrated resting position at the same time
+// the black scene-fade fades out — the "arch forward into the
+// screen" from the fade in/out plan. Exit reverses the same move
+// while fading back to black, then navigates back to the 2D page.
+
+// Deliberately a MOSTLY VERTICAL arc (small horizontal
+// component) rather than a straight pull-back along the camera's
+// own viewing direction. Since the final position sits basically
+// AT the character's head, pulling straight back along that same
+// line put the starting point directly behind the skull — moving
+// "forward" from there meant passing straight through the head
+// on the way in. Coming down mostly from above avoids that path
+// entirely. Also cut to roughly 25-30% of the original travel
+// distance per feedback that the move was too big.
+const ARCH_BACK_DISTANCE = 0.35;
+
+const ARCH_HEIGHT = 0.85;
+
+const ARCH_PITCH_DOWN_AMOUNT = 0.18;
+
+const INTRO_DURATION = 1.3;
+
+const OUTRO_DURATION = 0.9;
+
+
+let introActive = false;
+
+let introStartTime = 0;
+
+const introFromPos = new THREE.Vector3();
+
+const introToPos = new THREE.Vector3();
+
+let introFromYaw = 0;
+
+let introToYaw = 0;
+
+let introFromPitch = 0;
+
+let introToPitch = 0;
+
+
+let outroActive = false;
+
+let outroStartTime = 0;
+
+const outroFromPos = new THREE.Vector3();
+
+const outroToPos = new THREE.Vector3();
+
+let outroFromYaw = 0;
+
+let outroToYaw = 0;
+
+let outroFromPitch = 0;
+
+let outroToPitch = 0;
+
+let outroNavigateTimeout = null;
+
+
+function easeInOutCubic(t) {
+
+    return t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+}
+
+
+function exitToPortfolio() {
+
+    // Guard against double-firing (button mashed, or fired while
+    // the intro hasn't even finished yet).
+    if (outroActive) {
+
+        return;
+
+    }
+
+    introActive = false;
+
+
+    outroFromPos.copy(camera.position);
+
+    outroFromYaw = yaw;
+
+    outroFromPitch = pitch;
+
+
+    // Reuse the exact same "arched back" pose the entrance
+    // started from, computed fresh from the CURRENT look
+    // direction so it reverses naturally regardless of where the
+    // camera has been dragged to since.
+    const currentEuler =
+        new THREE.Euler(
+            pitch,
+            yaw,
+            0,
+            'YXZ'
+        );
+
+    const currentForward =
+        new THREE.Vector3(0, 0, -1)
+            .applyEuler(currentEuler);
+
+    outroToPos
+        .copy(camera.position)
+        .addScaledVector(currentForward, -ARCH_BACK_DISTANCE)
+        .add(
+            new THREE.Vector3(0, ARCH_HEIGHT, 0)
+        );
+
+    outroToYaw = yaw;
+
+    outroToPitch = pitch - ARCH_PITCH_DOWN_AMOUNT;
+
+
+    outroActive = true;
+
+    outroStartTime =
+        clock.getElapsedTime();
+
+
+    if (sceneFadeElement) {
+
+        // Slight delay so the pull-back is visible before black
+        // fully takes over, matching the entrance's feel in
+        // reverse.
+        setTimeout(() => {
+
+            sceneFadeElement.classList.remove('hidden');
+
+        }, 300);
+
+    }
+
+
+    outroNavigateTimeout =
+        setTimeout(() => {
+
+            window.location.href = 'index.html';
+
+        }, OUTRO_DURATION * 1000 + 200);
+
+}
+
+
+// ============================================================
 // CAMERA POSITION
 // ============================================================
 
@@ -846,22 +1203,23 @@ function positionCameraAtHead() {
 
 
     // --------------------------------------------------------
-    // Your calibrated camera position
+    // Your calibrated camera position — this is the INTRO'S
+    // TARGET now, not an instant cut.
     // --------------------------------------------------------
 
-    camera.position.copy(
+    introToPos.copy(
         headPosition
     );
 
-    camera.position.y +=
+    introToPos.y +=
         0.3;
 
-    camera.position.z +=
+    introToPos.z +=
         0.3;
 
 
     // --------------------------------------------------------
-    // Initial yaw
+    // Target yaw / pitch
     // --------------------------------------------------------
 
     initialYaw =
@@ -870,13 +1228,57 @@ function positionCameraAtHead() {
             -forward.z
         );
 
-
-    yaw =
+    introToYaw =
         initialYaw;
 
-    pitch =
+    introToPitch =
         0;
 
+
+    // --------------------------------------------------------
+    // Arched-back starting pose: pulled back along the target's
+    // own forward direction, raised up, looking down a bit more
+    // than the target — eases into place over INTRO_DURATION.
+    // --------------------------------------------------------
+
+    const targetEuler =
+        new THREE.Euler(
+            introToPitch,
+            introToYaw,
+            0,
+            'YXZ'
+        );
+
+    const targetForward =
+        new THREE.Vector3(0, 0, -1)
+            .applyEuler(targetEuler);
+
+    introFromPos
+        .copy(introToPos)
+        .addScaledVector(targetForward, -ARCH_BACK_DISTANCE)
+        .add(
+            new THREE.Vector3(0, ARCH_HEIGHT, 0)
+        );
+
+    introFromYaw =
+        introToYaw;
+
+    introFromPitch =
+        introToPitch - ARCH_PITCH_DOWN_AMOUNT;
+
+
+    // Snap to the starting pose right now — the black overlay is
+    // still fully opaque at this point, so this jump is never
+    // seen.
+    camera.position.copy(
+        introFromPos
+    );
+
+    yaw =
+        introFromYaw;
+
+    pitch =
+        introFromPitch;
 
     camera.rotation.order =
         'YXZ';
@@ -886,6 +1288,27 @@ function positionCameraAtHead() {
 
     camera.rotation.x =
         pitch;
+
+
+    introActive = true;
+
+    introStartTime =
+        clock.getElapsedTime();
+
+
+    // Reveal: fade the black overlay out while the intro camera
+    // move plays.
+    if (sceneFadeElement) {
+
+        if (sceneLoadingTextElement) {
+
+            sceneLoadingTextElement.classList.remove('visible');
+
+        }
+
+        sceneFadeElement.classList.add('hidden');
+
+    }
 
 }
 
@@ -2367,6 +2790,17 @@ renderer.domElement.addEventListener(
 
                 lastScrollY = event.clientY;
 
+                // Without this, if the gesture ends while
+                // positioned over some other fixed UI element
+                // (day/night button, exit button, etc.), pointerup
+                // is delivered to THAT element instead of the
+                // canvas — our cleanup handler below never fires,
+                // and isScrollDragging gets stuck true until a
+                // page refresh.
+                renderer.domElement.setPointerCapture(
+                    event.pointerId
+                );
+
                 return;
 
             }
@@ -2543,12 +2977,77 @@ function endScrollDrag(event) {
 
     scrollDragMoved = false;
 
+    try {
+
+        renderer.domElement.releasePointerCapture(
+            event.pointerId
+        );
+
+    } catch (error) {
+
+        // pointer capture may already be released - ignore
+
+    }
+
 }
 
 
 renderer.domElement.addEventListener('pointerup', endScrollDrag);
 
 renderer.domElement.addEventListener('pointercancel', endScrollDrag);
+
+
+// ============================================================
+// STUCK-STATE SAFETY NET
+// ============================================================
+//
+// Belt-and-suspenders alongside the pointer-capture fix above:
+// if a pointer we THINK is mid-drag goes up or gets cancelled
+// ANYWHERE in the document (not just on the canvas), force-clear
+// the relevant state. This makes it structurally impossible for
+// isDragging/isScrollDragging to get stuck true forever (which
+// silently degrades hover-driven features like the FOV zoom
+// until a full page refresh).
+
+window.addEventListener(
+    'pointerup',
+    (event) => {
+
+        if (event.pointerId === dragPointerId) {
+
+            endDrag(event);
+
+        }
+
+        if (event.pointerId === scrollDragPointerId) {
+
+            endScrollDrag(event);
+
+        }
+
+    },
+    true
+);
+
+window.addEventListener(
+    'pointercancel',
+    (event) => {
+
+        if (event.pointerId === dragPointerId) {
+
+            endDrag(event);
+
+        }
+
+        if (event.pointerId === scrollDragPointerId) {
+
+            endScrollDrag(event);
+
+        }
+
+    },
+    true
+);
 
 
 // ============================================================
@@ -2660,25 +3159,43 @@ renderer.domElement.addEventListener(
 // ============================================================
 // MOUSE POSITION
 // ============================================================
+//
+// ROOT CAUSE (found via live debugging): three.js's own
+// InteractiveGroup addon (used for HTMLMesh click-forwarding)
+// attaches a bubble-phase listener directly on the canvas and
+// calls stopPropagation() on pointermove unconditionally. That
+// killed the event before it ever reached a window-level
+// bubble-phase listener for ANY movement over the 3D scene
+// itself — mouse.x/y only ever updated when the cursor crossed
+// onto an HTML overlay button (a different element entirely,
+// never touched by the canvas's stopped propagation).
+//
+// Fix: listen in the CAPTURE phase instead. Capture-phase
+// listeners run on the way DOWN to the target (window -> ... ->
+// canvas), fully before any of the target's own bubble-phase
+// listeners — including InteractiveGroup's — ever get a chance
+// to call stopPropagation(). Using the canvas's own bounding
+// rect (rather than window.innerWidth/innerHeight) is also more
+// correct in general, though currently equivalent since the
+// canvas fills the viewport.
+
+let isPointerOverChrome = false;
 
 window.addEventListener(
     'pointermove',
     (event) => {
 
-        mouse.x =
-            (
-                event.clientX /
-                window.innerWidth
-            ) * 2 - 1;
+        const rect =
+            renderer.domElement.getBoundingClientRect();
 
+        mouse.x =
+            ((event.clientX - rect.left) / rect.width) * 2 - 1;
 
         mouse.y =
-            -(
-                event.clientY /
-                window.innerHeight
-            ) * 2 + 1;
+            -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-    }
+    },
+    true // capture phase
 );
 
 
@@ -2691,6 +3208,7 @@ function animate() {
     requestAnimationFrame(
         animate
     );
+
 
 
     // --------------------------------------------------------
@@ -2716,6 +3234,84 @@ function animate() {
     // --------------------------------------------------------
     // Camera
     // --------------------------------------------------------
+
+    if (introActive) {
+
+        const introT =
+            Math.min(
+                (clock.getElapsedTime() - introStartTime) / INTRO_DURATION,
+                1
+            );
+
+        const introEased =
+            easeInOutCubic(introT);
+
+        camera.position.lerpVectors(
+            introFromPos,
+            introToPos,
+            introEased
+        );
+
+        yaw =
+            THREE.MathUtils.lerp(
+                introFromYaw,
+                introToYaw,
+                introEased
+            );
+
+        pitch =
+            THREE.MathUtils.lerp(
+                introFromPitch,
+                introToPitch,
+                introEased
+            );
+
+        if (introT >= 1) {
+
+            introActive = false;
+
+        }
+
+    }
+
+    if (outroActive) {
+
+        const outroT =
+            Math.min(
+                (clock.getElapsedTime() - outroStartTime) / OUTRO_DURATION,
+                1
+            );
+
+        const outroEased =
+            easeInOutCubic(outroT);
+
+        camera.position.lerpVectors(
+            outroFromPos,
+            outroToPos,
+            outroEased
+        );
+
+        yaw =
+            THREE.MathUtils.lerp(
+                outroFromYaw,
+                outroToYaw,
+                outroEased
+            );
+
+        pitch =
+            THREE.MathUtils.lerp(
+                outroFromPitch,
+                outroToPitch,
+                outroEased
+            );
+
+        if (outroT >= 1) {
+
+            outroActive = false;
+
+        }
+
+    }
 
     camera.rotation.order =
         'YXZ';
@@ -2748,10 +3344,12 @@ function animate() {
     if (portfolioScreenMesh) {
 
         const intersections =
-            raycaster.intersectObject(
-                portfolioScreenMesh,
-                true
-            );
+            isPointerOverChrome
+                ? []
+                : raycaster.intersectObject(
+                    portfolioScreenMesh,
+                    true
+                );
 
 
         const hovering =
