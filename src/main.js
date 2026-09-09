@@ -273,7 +273,7 @@ renderer.domElement.style.touchAction =
 
 const ENABLE_POST_PROCESSING = true;
 
-const BLOOM_STRENGTH = 0.05;
+const BLOOM_STRENGTH = 0.1;
 
 const BLOOM_RADIUS = 0.3;
 
@@ -685,7 +685,7 @@ const MAX_YAW =
 
 
 const MAX_PITCH =
-    THREE.MathUtils.degToRad(50);
+    THREE.MathUtils.degToRad(40);
 
 
 // ============================================================
@@ -818,7 +818,7 @@ const loader =
 loader.load(
 
     new URL(
-        './models/Landscape.glb',
+        './models/Landscape_optimized.glb',
         import.meta.url
     ).href,
 
