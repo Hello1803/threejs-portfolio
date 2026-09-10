@@ -33,8 +33,8 @@ main{position:relative;flex:1}
 .hero h2{margin:0;color:#c0c7bb;font-size:clamp(13px,2vw,18px);font-weight:450;line-height:1.35}
 .accent{color:var(--accent)}
 .intro{max-width:620px;margin:19px 0;color:#c5cbc0;font-size:clamp(11px,1.65vw,15px);line-height:1.55}
-.primary-button{border:1px solid var(--accent);background:var(--accent);color:#17200e;padding:10px 15px;cursor:pointer;font-size:10px;font-weight:800;letter-spacing:.05em}
-.primary-button:hover{filter:brightness(1.07)}
+.primary-button{border:1px solid var(--accent);background:#000;color:#ffffff;padding:10px 15px;cursor:pointer;font-size:10px;font-weight:800;letter-spacing:.05em}
+.primary-button:hover{filter:brightness(1.07);color: var(--accent);}
 .home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .card{min-height:92px;padding:13px;border:1px solid var(--line);background:var(--panel);text-align:left;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between}
 .card:hover{background:var(--panel2);border-color:rgba(194,244,107,.28)}
@@ -97,8 +97,8 @@ main{position:relative;flex:1}
 @media(max-height:560px){.status-bar{height:25px}.page{padding-top:10px}.hero{padding:5px 0 12px}.hero h1{font-size:clamp(36px,9vw,62px)}.intro{margin:10px 0;font-size:10px}.home-grid .card{min-height:65px}.case-visual,.architecture,.signal-visual,.scene-visual,.kolam-visual{height:125px}.bottom-detail{margin-top:7px}.page-header{margin-bottom:10px}}
 
 .hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:2px}
-.secondary-button{border:1px solid var(--line);background:transparent;color:var(--text);padding:10px 15px;cursor:pointer;font-size:10px;font-weight:800;letter-spacing:.05em;display:inline-flex;align-items:center;gap:6px}
-.secondary-button:hover{border-color:rgba(194,244,107,.4);color:var(--accent)}
+.secondary-button{border:1px solid var(--line);background:var(--accent);color:#000;padding:10px 15px;cursor:pointer;font-size:10px;font-weight:800;letter-spacing:.05em;display:inline-flex;align-items:center;gap:6px}
+.secondary-button:hover{border-color:rgba(148, 107, 244, 0.4);color:#0a0c0e;}
 
 #page-fade{position:fixed;inset:0;z-index:3000;background:#000;opacity:0;pointer-events:none;transition:opacity .6s ease}
 #page-fade.active{opacity:1;pointer-events:auto}

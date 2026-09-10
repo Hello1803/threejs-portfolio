@@ -680,3 +680,27 @@ main {
         line-height: 1.25 !important;
     }
 }
+
+/* Resume button — 3D/iPad portfolio */
+.status-bar .resume-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 8px 14px !important;
+  min-width: 92px !important;
+  box-sizing: border-box !important;
+  border: 1px solid rgba(194, 244, 107, .55) !important;
+  border-radius: 8px !important;
+  background: rgba(194, 244, 107, .14) !important;
+  color: #c2f46b !important;
+  text-decoration: none !important;
+  font: inherit !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+.status-bar .resume-button:hover {
+  background: rgba(194, 244, 107, .24) !important;
+  color: #d8ff9b !important;
+}

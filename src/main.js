@@ -273,16 +273,16 @@ renderer.domElement.style.touchAction =
 
 const ENABLE_POST_PROCESSING = true;
 
-const BLOOM_STRENGTH = 0.1;
+const BLOOM_STRENGTH = 0.15;
 
-const BLOOM_RADIUS = 0.3;
+const BLOOM_RADIUS = 0.5;
 
 // How bright (0–1, post-tonemapping) a pixel needs to be before
 // it blooms. High on purpose for now — only real point-light-like
 // things (fireflies, a sun disc) should cross this, not general
 // scene brightness. Lower it once real emissive materials exist
 // to tune against.
-const BLOOM_THRESHOLD = 0.8;
+const BLOOM_THRESHOLD = 0.99;
 
 
 const composer =
